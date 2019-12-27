@@ -168,11 +168,14 @@ public class CodeWriter {
     }
 
     public void writeLabel(String label) {
+        fileWriter.println("//label "+label);
         fileWriter.println("("+label+")");
     }
 
     public void writeGoto(String label) {
-
+        fileWriter.println("//goto "+label);
+        fileWriter.println("@"+label);
+        fileWriter.println("0;JMP");
     }
 
     public void writeIf(String label) {
