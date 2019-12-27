@@ -46,7 +46,7 @@ public class Parser {
             return CommandType.LABEL;
         } else if (currentLine.startsWith("goto")) {
             return CommandType.GOTO;
-        } else if (currentLine.startsWith("if")) {
+        } else if (currentLine.startsWith("if-goto")) {
             return CommandType.IF;
         } else if (currentLine.startsWith("function")) {
             return CommandType.FUNCTION;

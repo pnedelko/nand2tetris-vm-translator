@@ -46,15 +46,34 @@ public class Main {
 
             while (parser.hasMoreCommands()) {
                 parser.advance();
-                if (parser.commandType() == CommandType.PUSH) {
-//                    System.out.println("//"+parser.getCommand());
-                    codeWriter.writePushPop(CommandType.PUSH, parser.arg1(), parser.arg2());
-                } else if (parser.commandType() == CommandType.POP) {
-//                    System.out.println("//"+parser.getCommand());
-                    codeWriter.writePushPop(CommandType.POP, parser.arg1(), parser.arg2());
-                } else if (parser.commandType() == CommandType.ARITHMETIC) {
-//                    System.out.println("//"+parser.getCommand());
-                    codeWriter.writeArithmetic(parser.arg1());
+                switch (parser.commandType()) {
+                    case PUSH:
+                        codeWriter.writePushPop(CommandType.PUSH, parser.arg1(), parser.arg2());
+                        break;
+                    case POP:
+                        codeWriter.writePushPop(CommandType.POP, parser.arg1(), parser.arg2());
+                        break;
+                    case ARITHMETIC:
+                        codeWriter.writeArithmetic(parser.arg1());
+                        break;
+                    case LABEL:
+                        codeWriter.writeLabel(parser.arg1());
+                        break;
+                    case GOTO:
+                        codeWriter.writeGoto(parser.arg1());
+                        break;
+                    case IF:
+                        codeWriter.writeIf(parser.arg1());
+                        break;
+                    case CALL:
+                        codeWriter.writeCall(parser.arg1(), parser.arg2());
+                        break;
+                    case RETURN:
+                        codeWriter.writeReturn();
+                        break;
+                    case FUNCTION:
+                        codeWriter.writeFunction(parser.arg1(), parser.arg2());
+                        break;
                 }
             }
             parser.close();

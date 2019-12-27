@@ -69,29 +69,6 @@ public class CodeWriter {
         incrementSP();
     }
 
-    private void initSP() {
-        fileWriter.println("@256");
-        fileWriter.println("D=A");
-        fileWriter.println("@SP");
-        fileWriter.println("M=D");
-    }
-
-    private void saveTopStackItemIntoD() {
-        saveTopStackItemAddressIntoA();
-        fileWriter.println("D=M");
-    }
-
-    private void saveTopStackItemAddressIntoA() {
-        fileWriter.println("@SP");
-        fileWriter.println("M=M-1");
-        fileWriter.println("A=M");
-    }
-
-    private void incrementSP() {
-        fileWriter.println("@SP");
-        fileWriter.println("M=M+1");
-    }
-
     private void writeBooleanOperation(String op) {
         saveTopStackItemIntoD();
 
@@ -186,6 +163,60 @@ public class CodeWriter {
         }
     }
 
+    public void writeInit() {
+
+    }
+
+    public void writeLabel(String label) {
+        fileWriter.println("("+label+")");
+    }
+
+    public void writeGoto(String label) {
+
+    }
+
+    public void writeIf(String label) {
+        fileWriter.println("//if-goto "+label);
+        saveTopStackItemIntoD();
+        fileWriter.println("@"+label);
+        fileWriter.println("D;JNE"); //jump if D not equal 0
+    }
+
+    public void writeCall(String functionName, int numArgs) {
+
+    }
+
+    public void writeReturn() {
+
+    }
+
+    public void writeFunction(String functionName, int numLocals) {
+
+    }
+
+    private void initSP() {
+        fileWriter.println("@256");
+        fileWriter.println("D=A");
+        fileWriter.println("@SP");
+        fileWriter.println("M=D");
+    }
+
+    private void saveTopStackItemIntoD() {
+        saveTopStackItemAddressIntoA();
+        fileWriter.println("D=M");
+    }
+
+    private void saveTopStackItemAddressIntoA() {
+        fileWriter.println("@SP");
+        fileWriter.println("M=M-1");
+        fileWriter.println("A=M");
+    }
+
+    private void incrementSP() {
+        fileWriter.println("@SP");
+        fileWriter.println("M=M+1");
+    }
+
     private void saveStaticValueIntoD(int val) {
         fileWriter.println("@"+val);
         fileWriter.println("D=A");
@@ -197,20 +228,25 @@ public class CodeWriter {
     }
 
     private void saveSegmentAddressIntoA(String segment, int offset) {
-        if (segment.equals("TEMP")) {
-            saveStaticValueIntoD(offset);
-            fileWriter.println("@5");
-            fileWriter.println("A=A+D");
-        } else if (segment.equals("POINTER")) {
-            saveStaticValueIntoD(offset);
-            fileWriter.println("@3");
-            fileWriter.println("A=A+D");
-        } else if (segment.equals("STATIC")) {
-            fileWriter.println("@"+fileName+"."+offset);
-        } else {
-            saveStaticValueIntoD(offset);
-            fileWriter.println("@"+segment);
-            fileWriter.println("A=M+D");
+        switch (segment) {
+            case "TEMP":
+                saveStaticValueIntoD(offset);
+                fileWriter.println("@5");
+                fileWriter.println("A=A+D");
+                break;
+            case "POINTER":
+                saveStaticValueIntoD(offset);
+                fileWriter.println("@3");
+                fileWriter.println("A=A+D");
+                break;
+            case "STATIC":
+                fileWriter.println("@" + fileName + "." + offset);
+                break;
+            default:
+                saveStaticValueIntoD(offset);
+                fileWriter.println("@" + segment);
+                fileWriter.println("A=M+D");
+                break;
         }
     }
 
