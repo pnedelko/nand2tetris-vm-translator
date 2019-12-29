@@ -190,11 +190,81 @@ public class CodeWriter {
     }
 
     public void writeReturn() {
+        //endFrame = LCL
+        fileWriter.println("@LCL");
+        fileWriter.println("D=M");
+        fileWriter.println("@endFrame");
+        fileWriter.println("M=D");
 
+        //retAddress = *(endFrame-5)
+        fileWriter.println("@endFrame");
+        fileWriter.println("D=M");
+        fileWriter.println("@5");
+        fileWriter.println("A=D-A");
+        fileWriter.println("D=M");
+        fileWriter.println("@retAddress");
+        fileWriter.println("M=D");
+
+        //*ARG = pop()
+        saveTopStackItemIntoD();
+        fileWriter.println("@ARG");
+        fileWriter.println("A=M");
+        fileWriter.println("M=D");
+
+        //SP=ARG+1
+        fileWriter.println("@ARG");
+        fileWriter.println("D=M");
+        fileWriter.println("@SP");
+        fileWriter.println("M=D+1");
+
+        //THAT = *(endFrame-1)
+        fileWriter.println("@endFrame");
+        fileWriter.println("D=M");
+        fileWriter.println("@1");
+        fileWriter.println("A=D-A");
+        fileWriter.println("D=M");
+        fileWriter.println("@THAT");
+        fileWriter.println("M=D");
+
+        //THIS = *(endFrame-2)
+        fileWriter.println("@endFrame");
+        fileWriter.println("D=M");
+        fileWriter.println("@2");
+        fileWriter.println("A=D-A");
+        fileWriter.println("D=M");
+        fileWriter.println("@THIS");
+        fileWriter.println("M=D");
+
+        //ARG = *(endFrame-3)
+        fileWriter.println("@endFrame");
+        fileWriter.println("D=M");
+        fileWriter.println("@3");
+        fileWriter.println("A=D-A");
+        fileWriter.println("D=M");
+        fileWriter.println("@ARG");
+        fileWriter.println("M=D");
+
+        //LCL = *(endFrame-4)
+        fileWriter.println("@endFrame");
+        fileWriter.println("D=M");
+        fileWriter.println("@4");
+        fileWriter.println("A=D-A");
+        fileWriter.println("D=M");
+        fileWriter.println("@LCL");
+        fileWriter.println("M=D");
+
+        //goto retAddress
+        fileWriter.println("@retAddress");
+        fileWriter.println("A=M");
+        fileWriter.println("0;JMP");
     }
 
     public void writeFunction(String functionName, int numLocals) {
-
+        fileWriter.println("//function " + functionName + " " + numLocals);
+        fileWriter.println("("+functionName+")");
+        for (int i = 0; i < numLocals; i++) {
+            setLocalVariableToZero(i);
+        }
     }
 
     private void initSP() {
@@ -202,6 +272,11 @@ public class CodeWriter {
         fileWriter.println("D=A");
         fileWriter.println("@SP");
         fileWriter.println("M=D");
+    }
+
+    private void setLocalVariableToZero(int offset) {
+        saveSegmentAddressIntoA("LCL", offset);
+        fileWriter.println("M=0");
     }
 
     private void saveTopStackItemIntoD() {
