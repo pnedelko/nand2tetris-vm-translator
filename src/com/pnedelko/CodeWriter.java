@@ -7,16 +7,23 @@ import java.io.PrintWriter;
 public class CodeWriter {
     private PrintWriter fileWriter;
     private int jumpIndex = 0;
+    private int callIndex = 0;
     private String fileName;
 
     CodeWriter(File file) throws IOException {
         fileWriter = new PrintWriter(file);
         fileName = file.getName();
-//        initSP();
     }
 
     public void setFilename(String fileName) {
         this.fileName = fileName;
+    }
+
+    public void writeInit() {
+        saveStaticValueIntoD(256);
+        fileWriter.println("@SP");
+        fileWriter.println("M=D");
+        writeCall("Sys.init", 0);
     }
 
     public void writeArithmetic(String command) {
@@ -129,11 +136,7 @@ public class CodeWriter {
                     System.err.println("Wrong segment name: " + segment);
             }
 
-            fileWriter.println("@SP");
-            fileWriter.println("A=M");
-            fileWriter.println("M=D");
-            fileWriter.println("@SP");
-            fileWriter.println("M=M+1");
+            saveDIntoStack();
         } else if (commandType == CommandType.POP) {
             switch (segment) {
                 case "local":
@@ -163,10 +166,6 @@ public class CodeWriter {
         }
     }
 
-    public void writeInit() {
-
-    }
-
     public void writeLabel(String label) {
         fileWriter.println("//label "+label);
         fileWriter.println("("+label+")");
@@ -186,10 +185,53 @@ public class CodeWriter {
     }
 
     public void writeCall(String functionName, int numArgs) {
+        fileWriter.println("//call " + functionName + " " + numArgs);
 
+        String returnLabel = "RETURN_" + functionName + callIndex++;
+
+        //push return-address
+        saveLabelAddressIntoD(returnLabel);
+        saveDIntoStack();
+
+        //push LCL
+        saveLCLIntoD();
+        saveDIntoStack();
+
+        //push ARG
+        saveARGIntoD();
+        saveDIntoStack();
+
+        //push THIS
+        saveTHISIntoD();
+        saveDIntoStack();
+
+        //push THAT
+        saveTHATIntoD();
+        saveDIntoStack();
+
+        //push ARG = SP - n - 5
+        saveSPIntoD();
+        fileWriter.println("@"+numArgs);
+        fileWriter.println("D=D-A");
+        fileWriter.println("@5");
+        fileWriter.println("D=D-A");
+        fileWriter.println("@ARG");
+        fileWriter.println("M=D");
+
+        //push LCL = SP
+        saveSPIntoD();
+        fileWriter.println("@LCL");
+        fileWriter.println("M=D");
+
+        //goto f
+        gotoLabel(functionName);
+
+        //(return-address)
+        fileWriter.println("(" + returnLabel + ")");
     }
 
     public void writeReturn() {
+        fileWriter.println("//return");
         //endFrame = LCL
         fileWriter.println("@LCL");
         fileWriter.println("D=M");
@@ -263,15 +305,51 @@ public class CodeWriter {
         fileWriter.println("//function " + functionName + " " + numLocals);
         fileWriter.println("("+functionName+")");
         for (int i = 0; i < numLocals; i++) {
-            setLocalVariableToZero(i);
+            saveStaticValueIntoD(0);
+            saveDIntoStack();
         }
     }
 
-    private void initSP() {
-        fileWriter.println("@256");
-        fileWriter.println("D=A");
+    private void saveDIntoStack() {
         fileWriter.println("@SP");
+        fileWriter.println("A=M");
         fileWriter.println("M=D");
+        incrementSP();
+    }
+
+    private void saveSPIntoD() {
+        saveLabelValueIntoD("SP");
+    }
+
+    private void saveLCLIntoD() {
+        saveLabelValueIntoD("LCL");
+    }
+
+    private void saveARGIntoD() {
+        saveLabelValueIntoD("ARG");
+    }
+
+    private void saveTHISIntoD() {
+        saveLabelValueIntoD("THIS");
+    }
+
+    private void saveTHATIntoD() {
+        saveLabelValueIntoD("THAT");
+    }
+
+    private void saveLabelValueIntoD(String label) {
+        fileWriter.println("@"+label);
+        fileWriter.println("D=M");
+    }
+
+    private void saveLabelAddressIntoD(String label) {
+        fileWriter.println("@"+label);
+        fileWriter.println("D=A");
+    }
+
+    private void gotoLabel(String label) {
+        fileWriter.println("@"+label);
+        fileWriter.println("0;JMP");
     }
 
     private void setLocalVariableToZero(int offset) {

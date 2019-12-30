@@ -32,7 +32,11 @@ public class Parser {
     public void advance() {
         String line = scanner.nextLine();
         String[] parts = line.split("//");
-        currentLine = parts[0].trim();
+        if (parts.length > 0) {
+            currentLine = parts[0].trim();
+        } else {
+            currentLine = "";
+        }
     }
 
     public CommandType commandType() {

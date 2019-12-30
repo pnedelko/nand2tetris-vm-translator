@@ -1,51 +1,84 @@
 package com.pnedelko;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 
 public class Main {
+    private static CodeWriter codeWriter;
+
     public static void main(String[] args) {
         if (args.length < 1) {
             System.out.println("First argument has to be a filepath");
         }
 
-        File inputFile = new File(args[0]);
+        File inputPath = new File(args[0]);
 
-        if (!inputFile.exists()) {
+        if (!inputPath.exists()) {
             System.err.println("Input file doesn't exist");
             return;
         }
 
-        System.out.println("Input file: " + inputFile.getAbsolutePath());
-        String dir = inputFile.getAbsoluteFile().getParent();
+        System.out.println("Input path: " + inputPath.getAbsolutePath());
 
-        File outputFile;
+        if (inputPath.isDirectory()) {
+            String dir = inputPath.getAbsolutePath();
+            String inFileName = inputPath.getName();
+            String outputFilename = inFileName + ".asm";
+            File outputFile = new File(dir, outputFilename);
+            System.out.println("Output file: " + outputFile.getAbsolutePath());
 
-        if (!inputFile.getName().endsWith(".vm")) {
-            // @todo: throw ???
-            System.out.println("Filename should be .vm");
-            return;
+            try {
+                codeWriter = new CodeWriter(outputFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            File[] files = inputPath.listFiles(pathname -> pathname.getName().endsWith(".vm"));
+
+            assert files != null; //is it ok?
+
+            codeWriter.writeInit();
+
+            for (File file : files) {
+                System.out.println("Processing file: " + file.getAbsolutePath());
+                processInputFile(file);
+            }
+            codeWriter.close();
+        } else {
+            String dir = inputPath.getAbsoluteFile().getParent();
+            if (!inputPath.getName().endsWith(".vm")) {
+                // @todo: throw ???
+                System.out.println("Filename should be .vm");
+                return;
+            }
+            String inFileName = inputPath.getName();
+            String outputFilename = inFileName.substring(0, inFileName.length() - 3) + ".asm";
+            File outputFile = new File(dir, outputFilename);
+            System.out.println("Output file: " + outputFile.getAbsolutePath());
+
+            try {
+                codeWriter = new CodeWriter(outputFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            codeWriter.writeInit();
+            processInputFile(inputPath);
+            codeWriter.close();
         }
-        String inFileName = inputFile.getName();
-        String outputFilename = inFileName.substring(0, inFileName.length() - 3) + ".asm";
-        outputFile = new File(dir, outputFilename);
+    }
 
-        System.out.println("Output file: " + outputFile.getAbsolutePath());
-
-        CodeWriter codeWriter;
-
-        try {
-            codeWriter = new CodeWriter(outputFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
+    private static void processInputFile(File inputFile) {
         try {
             Parser parser = new Parser(inputFile);
+            codeWriter.setFilename(inputFile.getName());
 
             while (parser.hasMoreCommands()) {
                 parser.advance();
+
                 switch (parser.commandType()) {
                     case PUSH:
                         codeWriter.writePushPop(CommandType.PUSH, parser.arg1(), parser.arg2());
@@ -77,7 +110,6 @@ public class Main {
                 }
             }
             parser.close();
-            codeWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
